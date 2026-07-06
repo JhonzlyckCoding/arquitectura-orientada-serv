@@ -3,6 +3,7 @@ const webpush = require('web-push');
 const cors = require('cors');
 
 const app = express();
+const db = require('./database'); // Importa la conexión a la base de datos MySQL
 
 // Configuración de Middlewares
 app.use(cors()); // Permite que tu HTML se conecte al servidor Node
@@ -72,6 +73,26 @@ app.post('/api/reportes/nuevo', async (req, res) => {
     res.status(500).json({ success: false, error: 'Fallo al procesar notificaciones.' });
   }
 });
+
+// Ruta para registrar un nuevo usuario
+app.post('/api/registro', async (req, res) => {
+    const { nombre, correo, contrasena } = req.body;
+
+    try {
+        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)';
+        const [resultado] = await db.query(query, [nombre, correo, contrasena]);
+        
+        res.status(201).json({ success: true, message: 'Usuario registrado con éxito', id: resultado.insertId });
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        // Si el error es por correo duplicado (código 1062 en MySQL)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
+        }
+        res.status(500).json({ success: false, message: 'Error en el servidor.' });
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

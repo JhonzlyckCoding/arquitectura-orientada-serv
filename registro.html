@@ -24,15 +24,35 @@
 </div>
 
 <script>
-function registrarUsuario() {
+async function registrarUsuario() {
   const nombre = document.getElementById("nombre").value;
   const correo = document.getElementById("correo").value;
-  const contraseña = document.getElementById("contraseña").value;
+  // Nota: asegúrate de que el id del input en tu HTML sea "contrasena" o ajusta esto
+  const contrasena = document.getElementById("contraseña").value; 
 
-  let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-  usuarios.push({nombre, correo, contraseña});
-  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+  if(!nombre || !correo || !contrasena) {
+      alert("Por favor llena todos los campos.");
+      return;
+  }
 
-  alert("Usuario registrado con éxito!");
+  try {
+      const respuesta = await fetch('http://localhost:3000/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, correo, contrasena })
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+          alert("Usuario registrado con éxito en la base de datos!");
+          window.location.href = 'login.html'; // Redirigir al login
+      } else {
+          alert("Error: " + data.message);
+      }
+  } catch (error) {
+      console.error("Error en la petición:", error);
+      alert("No se pudo conectar con el servidor.");
+  }
 }
 </script>
