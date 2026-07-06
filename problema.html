@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Reporte de Problemas</title>
+</head>
+<body>
+<section style="text-align: center;">
+    <h1>Reporte de Problemas</h1>
+     <nav>
+    <details>
+      <summary><b>Menú</b></summary>
+      <div>
+        <a href="index.html"><button>Inicio</button></a>
+        <a href="mapa.html"><button>Mapa</button></a>
+        <a href="rutas.html"><button>Rutas</button></a>
+        <a href="reportes.html"><button>Reportes</button></a>
+        <a href="soporte.html"><button>Soporte</button></a>
+      </div>
+    </details>
+  </nav>
+  <br><br>
+<select name="Que tipo de problema tiene" id="reporte">
+    <option value="">Selecciona el tipo de problema que tuvo</option>
+    <option value="- Formulario no envía">- Formulario no envía</option>
+    <option value="- Enlace roto">- Enlace roto</option>
+    <option value="- Problema con inicio de sesión ">- Problema con inicio de sesión </option>
+    <option value="- Error de carga">- Error de carga</option>
+</select>
+</section>
+<div style="margin-top: 20px; text-align: center;">
+    <label>Descripcion:</label><br>
+    <input type="text" placeholder="Describa mas a detalle el problema"><br><br>
+    <button>Enviar problema</button><br><br>
+    <a href="contactar.html"><button>Conctactar</button></a>
+
+    <button onclick="location.href='index.html'">Volver a la página principal</button>
+</div>
+</body>
+</html>

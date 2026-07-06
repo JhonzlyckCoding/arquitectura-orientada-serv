@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro de reporte - Dprisa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="text-align: center;">
+
+<h1>Registro de reporte</h1>
+  <nav>
+    <details>
+      <summary><b>Menú</b></summary>
+      <div>
+        <a href="index.html"><button>Inicio</button></a>
+        <a href="mapa.html"><button>Mapa</button></a>
+        <a href="rutas.html"><button>Rutas</button></a>
+        <a href="reportes.html"><button>Reportes</button></a>
+        <a href="soporte.html"><button>Soporte</button></a>
+      </div>
+    </details>
+  </nav>
+  <br><br>
+
+<select id="tipoReporte">
+    <option value="">Selecciona el tipo de reporte</option>
+    <option value="Obras">Obras</option>
+    <option value="Accidente">Accidente</option>
+    <option value="Vehículo detenido">Vehículo detenido</option>
+    <option value="Peligro en la vía">Peligro en la vía</option>
+    <option value="Clima severo">Clima severo</option>
+</select>
+
+<div style="margin-top: 20px;">
+    <label>Descripción:</label><br>
+    <input type="text" id="descripcion" placeholder="Describa lo que pasó"><br><br>
+
+    <label>Fecha:</label><br>
+    <input type="date" id="fecha"><br><br>
+
+    <button onclick="registrarReporte()">Registrar reporte</button><br><br>
+
+    <button onclick="location.href='index.html'">Volver a la página principal</button>
+</div>
+
+<script>
+function registrarReporte() {
+  const tipo = document.getElementById("tipoReporte").value;
+  const descripcion = document.getElementById("descripcion").value;
+  const fecha = document.getElementById("fecha").value;
+
+  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+  if (!usuarioActivo) {
+    alert("Debes iniciar sesión para registrar un reporte");
+    return;
+  }
+
+  // 1. Guardar localmente
+  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+  reportes.push({tipo, descripcion, fecha, usuario: usuarioActivo.correo});
+  localStorage.setItem("reportes", JSON.stringify(reportes));
+
+  // 2. Avisar al servidor Node.js para disparar notificaciones
+  const payloadNotificacion = {
+    evento: "nuevo_reporte",
+    datos: { tipo: tipo, descripcion: descripcion }
+  };
+
+  fetch('http://localhost:3000/api/reportes/nuevo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payloadNotificacion)
+  }).then(() => {
+    alert("Reporte registrado! Los usuarios serán notificados.");
+    setTimeout(() => { location.href='index.html'; }, 500);
+  }).catch(err => {
+    console.error("Error al notificar al servidor", err);
+    alert("Reporte guardado localmente (sin conexión al servidor de alertas).");
+  });
+}
+</script>
+
+</body>
+</html>

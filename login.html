@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dprisa - Acceder a cuenta</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header style="text-align: center; margin-bottom: 20px;">
+    <h1>Acceder</h1>
+</header>
+
+<hr>
+
+<section style="text-align: center;">
+    <h2>Iniciar sesión</h2>
+
+    <p><input type="email" id="loginCorreo" placeholder="Correo"></p>
+    <p><input type="password" id="loginContraseña" placeholder="Contraseña"></p>
+    <button onclick="loginUsuario()">Acceder</button>
+</section>
+
+<script>
+function loginUsuario() {
+  const correo = document.getElementById("loginCorreo").value;
+  const contraseña = document.getElementById("loginContraseña").value;
+
+  let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+  let usuario = usuarios.find(u => u.correo === correo && u.contraseña === contraseña);
+
+  if (usuario) {
+    localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
+    alert("Bienvenido " + usuario.nombre);
+    window.location.href = "index.html"; 
+  } else {
+    alert("Correo o contraseña incorrectos");
+  }
+}
+</script>
+
+</body>
+</html>

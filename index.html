@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dprisa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="text-align: center;">
+
+<header style="margin-bottom: 20px;">
+    <h1>Dprisa</h1>
+    <div id="usuarioActivo"></div>
+</header>
+
+<hr>
+
+<!-- Menú público (antes de iniciar sesión) -->
+<div id="menuPublico">
+    <button onclick="location.href='registro.html'">Registrarse</button>
+    <button onclick="location.href='login.html'">Acceder a cuenta</button>
+</div>
+
+<!-- Menú privado (después de iniciar sesión) -->
+<div id="menuPrivado" style="display:none;">
+    <button onclick="location.href='mapa.html'">Mapa</button>
+    <button onclick="location.href='trafico.html'">Tráfico</button>
+    <button onclick="location.href='rutas.html'">Rutas</button>
+    <button onclick="location.href='reportes.html'">Reportes</button>
+    <button onclick="location.href='registroreporte.html'">Reportar incidente</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
+
+<script>
+function cargarIndex() {
+  let usuario = JSON.parse(localStorage.getItem("usuarioActivo"));
+  if (usuario) {
+    document.getElementById("usuarioActivo").innerText = "Bienvenido, " + usuario.nombre;
+    document.getElementById("menuPublico").style.display = "none";
+    document.getElementById("menuPrivado").style.display = "block";
+  } else {
+    document.getElementById("usuarioActivo").innerText = "No has iniciado sesión.";
+    document.getElementById("menuPublico").style.display = "block";
+    document.getElementById("menuPrivado").style.display = "none";
+  }
+}
+
+function cerrarSesion() {
+  localStorage.removeItem("usuarioActivo");
+  alert("Sesión cerrada");
+  location.reload();
+}
+
+cargarIndex();
+</script>
+
+</body>
+</html>

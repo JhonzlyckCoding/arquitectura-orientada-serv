@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dprisa - Reportes</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+<header style="text-align: center; margin-bottom: 20px;">
+    <h1>Reportes</h1>
+    <nav>
+    <details>
+      <summary><b>Menú</b></summary>
+      <div>
+        <a href="index.html"><button>Inicio</button></a>
+        <a href="mapa.html"><button>Mapa</button></a>
+        <a href="rutas.html"><button>Rutas</button></a>
+        <a href="soporte.html"><button>Soporte</button></a>
+        <a href="registroreporte.html"><button>Reportar incidente</button></a>
+      </div>
+    </details>
+  </nav>
+</header>
+
+<!-- Filtros -->
+<section style="text-align: center; margin-bottom: 20px;">
+    <label>Filtrar por tipo:</label>
+    <select id="filtroTipo" onchange="mostrarReportes()">
+        <option value="">Todos</option>
+        <option value="Obras">Obras</option>
+        <option value="Accidente">Accidente</option>
+        <option value="Vehículo detenido">Vehículo detenido</option>
+        <option value="Peligro en la vía">Peligro en la vía</option>
+        <option value="Clima severo">Clima severo</option>
+    </select>
+
+    <label>Filtrar por fecha:</label>
+    <input type="date" id="filtroFecha" onchange="mostrarReportes()">
+
+    <button onclick="limpiarFiltros()">Limpiar filtros</button>
+</section>
+
+<div id="contenedor-reportes" style="padding: 15px; margin-top: 20px; text-align: center;">
+    <h2>Lista de Reportes Registrados</h2>
+</div>
+
+<hr>
+
+<section style="text-align: center;">
+    <a href="registroreporte.html"><button>Reportar incidente</button></a>
+    <button onclick="eliminarTodosMisReportes()">Eliminar todos mis reportes</button>
+</section>
+
+<script>
+function mostrarReportes() {
+  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+  // Obtener filtros
+  let filtroTipo = document.getElementById("filtroTipo").value;
+  let filtroFecha = document.getElementById("filtroFecha").value;
+
+  // Aplicar filtros
+  let filtrados = reportes.filter(r => {
+    let coincideTipo = filtroTipo === "" || r.tipo === filtroTipo;
+    let coincideFecha = filtroFecha === "" || r.fecha === filtroFecha;
+    return coincideTipo && coincideFecha;
+  });
+
+  let contenedor = document.getElementById("contenedor-reportes");
+
+  if (filtrados.length === 0) {
+    contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2><p>No hay reportes que coincidan con el filtro.</p>";
+    return;
+  }
+
+  let html = "<table><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Usuario</th><th>Acciones</th></tr>";
+  filtrados.forEach((r, index) => {
+    html += `<tr>
+      <td>${r.tipo}</td>
+      <td>${r.descripcion}</td>
+      <td>${r.fecha}</td>
+      <td>${r.usuario}</td>
+      <td>
+        ${usuarioActivo && usuarioActivo.correo === r.usuario 
+          ? `<button onclick="eliminarReporte(${index})">Eliminar</button>` 
+          : ""}
+      </td>
+    </tr>`;
+  });
+  html += "</table>";
+
+  contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2>" + html;
+}
+
+function eliminarReporte(index) {
+  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+  if (usuarioActivo && usuarioActivo.correo === reportes[index].usuario) {
+    reportes.splice(index, 1);
+    localStorage.setItem("reportes", JSON.stringify(reportes));
+    mostrarReportes();
+    alert("Reporte eliminado.");
+  } else {
+    alert("No puedes eliminar este reporte porque no es tuyo.");
+  }
+}
+
+function eliminarTodosMisReportes() {
+  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+  if (!usuarioActivo) {
+    alert("Debes iniciar sesión.");
+    return;
+  }
+
+  reportes = reportes.filter(r => r.usuario !== usuarioActivo.correo);
+  localStorage.setItem("reportes", JSON.stringify(reportes));
+  mostrarReportes();
+  alert("Todos tus reportes han sido eliminados.");
+}
+
+function limpiarFiltros() {
+  document.getElementById("filtroTipo").value = "";
+  document.getElementById("filtroFecha").value = "";
+  mostrarReportes();
+}
+
+mostrarReportes();
+</script>
+
+</body>
+</html>

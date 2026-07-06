@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dprisa - Mapa</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    #map {
+      height: 450px;
+      width: 600px;
+      margin: auto;
+      border: 1px solid #ccc;
+    }
+    header, section {
+      text-align: center;
+    }
+  </style>
+  <!-- Carga de la API de Google Maps con tu API KEY -->
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZZ-0IowtAd8FSs9UDvTvaKK_L-J8aeAk&callback=initMap">
+  </script>
+</head>
+<body>
+
+<header>
+  <h1>Mapa</h1>
+  <nav>
+    <details>
+      <summary><b>Menú</b></summary>
+      <div>
+        <a href="index.html"><button>Inicio</button></a>
+        <a href="rutas.html"><button>Rutas</button></a>
+        <a href="reportes.html"><button>Reportes</button></a>
+        <a href="soporte.html"><button>Soporte</button></a>
+        <a href="registroreporte.html"><button>Reportar incidente</button></a>
+      </div>
+    </details>
+  </nav>
+</header>
+
+<hr>
+
+<section>
+  <h2>Google Maps</h2>
+  <div id="map"></div>
+
+  <h3>Funciones del mapa</h3>
+  <button onclick="mostrarTrafico()">Tráfico</button>
+
+  <h3>Calcular ruta personalizada</h3>
+  <label>Origen: <input type="text" id="origen" placeholder="Ej. Pénjamo, Guanajuato"></label><br><br>
+  <label>Destino: <input type="text" id="destino" placeholder="Ej. Irapuato, Guanajuato"></label><br><br>
+  <button onclick="calcularRuta()">Calcular Ruta</button>
+</section>
+
+<script>
+  // ==========================================
+  // 2. LÓGICA DE NOTIFICACIONES PUSH (DEBUG MODE)
+  // ==========================================
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+    return outputArray;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log("PASO 1: Script iniciado. Verificando compatibilidad...");
+    
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      console.log("PASO 2: El navegador soporta Service Workers.");
+      console.log("ESTADO DEL PERMISO ACTUAL:", Notification.permission);
+
+      Notification.requestPermission().then(permission => {
+        console.log("PASO 3: El usuario respondió al permiso con:", permission);
+
+        if (permission === 'granted') {
+          console.log("PASO 4: Permiso concedido. Registrando sw.js...");
+          
+          navigator.serviceWorker.register('sw.js')
+            .then(registration => {
+              console.log("PASO 5: sw.js registrado. Esperando a que el worker esté activo...");
+              return navigator.serviceWorker.ready;
+            })
+            .then(swListo => {
+              console.log("PASO 6: Service Worker activo. Generando suscripción en el navegador...");
+              
+              // ¡PEGA TU LLAVE PÚBLICA AQUÍ!
+              const llavePublicaVapid = 'BKki4PgjftoYw1y_5a8ySIZGm0BQ3Xa20UHhqPjlIrrOLkNJcfL8tGUxdKr3cXIh6P14L2hcnnoBucGJUULgNNM'; 
+              const applicationServerKey = urlBase64ToUint8Array(llavePublicaVapid);
+              
+              return swListo.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: applicationServerKey
+              });
+            })
+            .then(subscription => {
+              console.log("PASO 7: ¡Suscripción creada con éxito!", subscription);
+              console.log("PASO 8: Enviando datos a Node.js (http://localhost:3000)...");
+              
+              return fetch('http://localhost:3000/api/suscripciones', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+              });
+            })
+            .then(res => {
+              console.log("PASO 9: Respuesta recibida de Node.js. Código HTTP:", res.status);
+            })
+            .catch(err => {
+              console.error("❌ ERROR DETECTADO EN LA CADENA:", err);
+            });
+            
+        } else {
+          console.warn("⚠️ El permiso no fue 'granted'. Proceso detenido.");
+        }
+      }).catch(err => console.error("❌ Error al pedir permiso:", err));
+      
+    } else {
+      console.error("❌ El navegador no soporta notificaciones.");
+    }
+  });
+</script>
+</body>
+</html>
+

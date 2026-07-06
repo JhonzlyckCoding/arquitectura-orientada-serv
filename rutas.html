@@ -1,0 +1,61 @@
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>Dprisa - Rutas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header style="text-align: center; margin-bottom: 20px;">
+    <h1>Rutas</h1>
+
+    <nav style="margin-bottom: 15px;">
+        <details>
+            <summary><b>Menú</b></summary>
+            <div style="margin-top: 10px;">
+                <a href="index.html"><button>Inicio</button></a>
+                <a href="mapa.html"><button>Mapa</button></a>
+                <a href="reportes.html"><button>Reportes</button></a>
+                <a href="soporte.html"><button>Soporte</button></a>
+                <a href="registroreporte.html"><button>Reportar incidente</button></a>
+            </div>
+        </details>
+    </nav>
+</header>
+
+<hr>
+<div id="contenedor-reportes" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;text-align: center;">
+  <h2>Rutas</h2>
+  <table id="tabla-rutas" style="width:100%; border-collapse: collapse; margin-top:10px;">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Origen</th>
+        <th>Destino</th>
+        <th>Distancia</th>
+        <th>Duración</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  // Al cargar la página, leer historial
+  const historial = JSON.parse(localStorage.getItem("historialRutas")) || [];
+  const tbody = document.querySelector("#tabla-rutas tbody");
+
+  historial.forEach(ruta => {
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${ruta.fecha}</td>
+      <td>${ruta.origen}</td>
+      <td>${ruta.destino}</td>
+      <td>${ruta.distancia}</td>
+      <td>${ruta.duracion}</td>
+    `;
+    tbody.appendChild(fila);
+  });
+</script>
+</body>
+</html>

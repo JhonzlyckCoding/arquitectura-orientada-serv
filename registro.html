@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro - Dprisa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="text-align: center;">
+
+<h1>Registro en Dprisa</h1>
+
+<div style="margin-top: 20px;">
+    <label>Nombre:</label><br>
+    <input type="text" id="nombre" placeholder="Ingresa tu nombre"><br><br>
+
+    <label>Correo:</label><br>
+    <input type="email" id="correo" placeholder="Ingresa tu correo"><br><br>
+    
+    <label>Contraseña:</label><br>
+    <input type="password" id="contraseña" placeholder="Contraseña"><br><br>
+
+    <button onclick="registrarUsuario()">Registrarse</button><br><br>
+
+    <button onclick="location.href='index.html'">Volver a la página principal</button>
+</div>
+
+<script>
+function registrarUsuario() {
+  const nombre = document.getElementById("nombre").value;
+  const correo = document.getElementById("correo").value;
+  const contraseña = document.getElementById("contraseña").value;
+
+  let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+  usuarios.push({nombre, correo, contraseña});
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+  alert("Usuario registrado con éxito!");
+}
+</script>
