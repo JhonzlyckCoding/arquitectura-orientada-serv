@@ -21,19 +21,35 @@
 </section>
 
 <script>
-function loginUsuario() {
+async function loginUsuario() {
   const correo = document.getElementById("loginCorreo").value;
-  const contraseña = document.getElementById("loginContraseña").value;
+  const contrasena = document.getElementById("loginContraseña").value;
 
-  let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-  let usuario = usuarios.find(u => u.correo === correo && u.contraseña === contraseña);
+  if (!correo || !contrasena) {
+      alert("Por favor ingresa tu correo y contraseña.");
+      return;
+  }
 
-  if (usuario) {
-    localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-    alert("Bienvenido " + usuario.nombre);
-    window.location.href = "index.html"; 
-  } else {
-    alert("Correo o contraseña incorrectos");
+  try {
+      const respuesta = await fetch('http://localhost:3000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo, contrasena })
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+          // Guardamos el usuario activo en localStorage (incluyendo el id_usuario de MySQL)
+          localStorage.setItem("usuarioActivo", JSON.stringify(data.usuario));
+          alert("Bienvenido " + data.usuario.nombre);
+          window.location.href = "index.html"; 
+      } else {
+          alert("Error: " + data.message);
+      }
+  } catch (error) {
+      console.error("Error en la petición:", error);
+      alert("No se pudo conectar con el servidor.");
   }
 }
 </script>

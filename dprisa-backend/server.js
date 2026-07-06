@@ -93,6 +93,32 @@ app.post('/api/registro', async (req, res) => {
     }
 });
 
+// Ruta para iniciar sesión (Login)
+app.post('/api/login', async (req, res) => {
+    const { correo, contrasena } = req.body;
+
+    try {
+        // Buscamos al usuario en la base de datos
+        const query = 'SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = ? AND contrasena = ?';
+        const [filas] = await db.query(query, [correo, contrasena]);
+
+        // Si filas.length es mayor a 0, significa que encontró al usuario
+        if (filas.length > 0) {
+            const usuarioEncontrado = filas[0];
+            res.status(200).json({ 
+                success: true, 
+                message: 'Inicio de sesión exitoso', 
+                usuario: usuarioEncontrado // Enviamos los datos (sin la contraseña por seguridad)
+            });
+        } else {
+            // Si no encontró nada, las credenciales están mal
+            res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
+        }
+    } catch (error) {
+        console.error('Error al iniciar sesión:', error);
+        res.status(500).json({ success: false, message: 'Error en el servidor.' });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
