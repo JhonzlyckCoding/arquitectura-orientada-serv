@@ -48,33 +48,41 @@ function registrarReporte() {
   const descripcion = document.getElementById("descripcion").value;
   const fecha = document.getElementById("fecha").value;
 
+  // Recuperamos el usuario activo que guardó el login
   let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
-  if (!usuarioActivo) {
-    alert("Debes iniciar sesión para registrar un reporte");
+  if (!usuarioActivo || !usuarioActivo.id_usuario) {
+    alert("Debes iniciar sesión para registrar un reporte oficial.");
     return;
   }
 
-  // 1. Guardar localmente
-  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
-  reportes.push({tipo, descripcion, fecha, usuario: usuarioActivo.correo});
-  localStorage.setItem("reportes", JSON.stringify(reportes));
+  if (!tipo || !descripcion || !fecha) {
+    alert("Por favor completa todos los campos del incidente.");
+    return;
+  }
 
-  // 2. Avisar al servidor Node.js para disparar notificaciones
-  const payloadNotificacion = {
-    evento: "nuevo_reporte",
-    datos: { tipo: tipo, descripcion: descripcion }
-  };
-
+  // Enviamos la petición limpia a la API del Servidor
   fetch('http://localhost:3000/api/reportes/nuevo', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payloadNotificacion)
-  }).then(() => {
-    alert("Reporte registrado! Los usuarios serán notificados.");
-    setTimeout(() => { location.href='index.html'; }, 500);
-  }).catch(err => {
-    console.error("Error al notificar al servidor", err);
-    alert("Reporte guardado localmente (sin conexión al servidor de alertas).");
+    body: JSON.stringify({
+      tipo: tipo,
+      descripcion: descripcion,
+      fecha_incidente: fecha,
+      id_usuario: usuarioActivo.id_usuario // Mandamos la llave primaria relacional
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("¡Reporte guardado en la Base de Datos con éxito! Alertas enviadas.");
+      window.location.href = 'index.html';
+    } else {
+      alert("Error del servidor: " + data.message);
+    }
+  })
+  .catch(err => {
+    console.error("Error al conectar con la pasarela de servicios:", err);
+    alert("Error de red, el reporte quedó offline.");
   });
 }
 </script>

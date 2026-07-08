@@ -3,89 +3,33 @@ const webpush = require('web-push');
 const cors = require('cors');
 
 const app = express();
-const db = require('./database'); // Importa la conexión a la base de datos MySQL
+const db = require('./database'); 
 
-// Configuración de Middlewares
-app.use(cors()); // Permite que tu HTML se conecte al servidor Node
-app.use(express.json()); // Permite recibir datos en formato JSON
+app.use(cors()); 
+app.use(express.json()); 
 
 // --- CONFIGURACIÓN DE WEB-PUSH ---
-// Reemplaza estas variables con las llaves que generaste
 const publicVapidKey = 'BApc8sZjqEMNmgUAoZ8IRRt4v9cJItJCP2IEpoThoU1yqr9FK9Ian3i-GIW457WgWatp3Y_6SP37Fjwov2OPSog';
 const privateVapidKey = 'VygJU70G5z4pAU1qr4-sYG-IJFTpluFEZuubXH54oZ0';
 
 webpush.setVapidDetails(
-  'mailto:contacto@dprisa.com', // Correo de contacto (requerido por el protocolo VAPID)
+  'mailto:contacto@dprisa.com', 
   publicVapidKey,
   privateVapidKey
 );
 
-// --- BASE DE DATOS TEMPORAL ---
-// Aquí guardamos las suscripciones de los navegadores.
-// En producción, esto debería guardarse en una base de datos (ej. MongoDB, MySQL).
-let suscripciones = [];
+// ==========================================
+//            RUTAS DEL API
+// ==========================================
 
-// --- RUTAS DEL API ---
-
-// 1. Ruta para guardar la suscripción de un nuevo usuario
-app.post('/api/suscripciones', (req, res) => {
-  const subscription = req.body;
-  
-  // Evitar duplicados simples comprobando el endpoint
-  const existe = suscripciones.find(sub => sub.endpoint === subscription.endpoint);
-  if (!existe) {
-    suscripciones.push(subscription);
-    console.log(`Nueva suscripción. Total de usuarios activos: ${suscripciones.length}`);
-  }
-
-  res.status(201).json({ success: true, message: 'Suscripción guardada.' });
-});
-
-// 2. Ruta para emitir una alerta a todos los usuarios
-app.post('/api/reportes/nuevo', async (req, res) => {
-  const { tipo, descripcion } = req.body.datos;
-
-  console.log(`Recibido reporte de ${tipo}. Notificando a ${suscripciones.length} usuarios...`);
-
-  // Estructura visual de la notificación
-  const payload = JSON.stringify({
-    title: '¡Alerta de Tráfico en Dprisa!',
-    body: `${tipo}: ${descripcion}`,
-    icon: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png', // Logo genérico de alerta
-    url: '/mapa.html'
-  });
-
-  try {
-    // Enviar notificación a todos los usuarios suscritos en paralelo
-    const notificaciones = suscripciones.map((sub, index) => {
-      return webpush.sendNotification(sub, payload).catch(error => {
-        console.error('Error al enviar notificación a un usuario (posiblemente canceló permisos).');
-        // Si falla, removemos esa suscripción del arreglo
-        suscripciones.splice(index, 1); 
-      });
-    });
-
-    await Promise.all(notificaciones);
-    res.status(200).json({ success: true, message: 'Notificaciones enviadas con éxito.' });
-
-  } catch (error) {
-    console.error('Error crítico al enviar notificaciones:', error);
-    res.status(500).json({ success: false, error: 'Fallo al procesar notificaciones.' });
-  }
-});
-
-// Ruta para registrar un nuevo usuario
+// 1. REGISTRO DE USUARIO
 app.post('/api/registro', async (req, res) => {
     const { nombre, correo, contrasena } = req.body;
-
     try {
         const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)';
         const [resultado] = await db.query(query, [nombre, correo, contrasena]);
-        
-        res.status(201).json({ success: true, message: 'Usuario registrado con éxito', id: resultado.insertId });
+        res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.insertId });
     } catch (error) {
-        console.error('Error al registrar usuario:', error);
-        // Si el error es por correo duplicado (código 1062 en MySQL)
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
         }
@@ -93,35 +37,105 @@ app.post('/api/registro', async (req, res) => {
     }
 });
 
-// Ruta para iniciar sesión (Login)
+// 2. LOGIN DE USUARIO
 app.post('/api/login', async (req, res) => {
     const { correo, contrasena } = req.body;
-
     try {
-        // Buscamos al usuario en la base de datos
         const query = 'SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = ? AND contrasena = ?';
         const [filas] = await db.query(query, [correo, contrasena]);
-
-        // Si filas.length es mayor a 0, significa que encontró al usuario
         if (filas.length > 0) {
-            const usuarioEncontrado = filas[0];
-            res.status(200).json({ 
-                success: true, 
-                message: 'Inicio de sesión exitoso', 
-                usuario: usuarioEncontrado // Enviamos los datos (sin la contraseña por seguridad)
-            });
+            res.status(200).json({ success: true, message: 'Inicio de sesión exitoso', usuario: filas[0] });
         } else {
-            // Si no encontró nada, las credenciales están mal
             res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
         }
     } catch (error) {
-        console.error('Error al iniciar sesión:', error);
         res.status(500).json({ success: false, message: 'Error en el servidor.' });
     }
 });
 
+// 3. GUARDAR SUSCRIPCIÓN PUSH EN MYSQL
+app.post('/api/suscripciones', async (req, res) => {
+    const { subscription, id_usuario } = req.body;
+    if (!subscription || !id_usuario) {
+      return res.status(400).json({ success: false, message: 'Faltan datos de suscripción.' });
+    }
+    try {
+      const query = `
+        INSERT INTO suscripciones_push (id_usuario, endpoint, subscription_json) 
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE id_usuario = ?, subscription_json = ?`;
+      await db.query(query, [id_usuario, subscription.endpoint, JSON.stringify(subscription), id_usuario, JSON.stringify(subscription)]);
+      res.status(201).json({ success: true, message: 'Suscripción guardada.' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Error interno.' });
+    }
+});
+
+// 4. CREAR REPORTE Y DISPARAR NOTIFICACIONES PUSH
+app.post('/api/reportes/nuevo', async (req, res) => {
+  const { tipo, descripcion, fecha_incidente, id_usuario } = req.body;
+  
+  if (!tipo || !descripcion || !fecha_incidente || !id_usuario) {
+    return res.status(400).json({ success: false, message: 'Faltan campos.' });
+  }
+
+  try {
+    const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES (?, ?, ?, ?)`;
+    const [resultadoDB] = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
+    
+    const [dispositivos] = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
+    const payload = JSON.stringify({
+      title: '¡Alerta en Dprisa!',
+      body: `${tipo}: ${descripcion}`,
+      icon: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png',
+      url: '/mapa.html'
+    });
+
+    const notificaciones = dispositivos.map(disp => {
+      const subObjeto = JSON.parse(disp.subscription_json);
+      return webpush.sendNotification(subObjeto, payload).catch(async () => {
+        await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = ?', [disp.id_suscripcion]);
+      });
+    });
+    
+    await Promise.all(notificaciones);
+    res.status(201).json({ success: true, message: 'Reporte guardado.', id_reporte: resultadoDB.insertId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: 'Error en el servidor.' });
+  }
+});
+
+// 5. LEER HISTORIAL DE REPORTES
+app.get('/api/reportes', async (req, res) => {
+  try {
+    const querySelect = `
+      SELECT r.id_reporte, r.tipo, r.descripcion, r.fecha_incidente, u.correo AS usuario 
+      FROM reportes r
+      JOIN usuarios u ON r.id_usuario = u.id_usuario
+      ORDER BY r.fecha_registro DESC`;
+    const [listaReportes] = await db.query(querySelect);
+    res.status(200).json({ success: true, reportes: listaReportes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error BD.' });
+  }
+});
+
+// 6. ELIMINAR UN REPORTE
+app.delete('/api/reportes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM reportes WHERE id_reporte = ?', [id]);
+    res.status(200).json({ success: true, message: 'Reporte eliminado.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'No se pudo eliminar.' });
+  }
+});
+
+// ==========================================
+//            INICIAR SERVIDOR
+// ==========================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Microservicio Dprisa ejecutándose en http://localhost:${PORT}`);
-  console.log(`Asegúrate de poner esta Llave Pública en tu mapa.html: ${publicVapidKey}`);
 });

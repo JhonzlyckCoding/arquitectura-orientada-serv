@@ -67,83 +67,62 @@
 </section>
 
 <script>
-function mostrarReportes() {
-  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+async function mostrarReportes() {
   let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
 
-  // Obtener filtros
+  // Obtener valores de los filtros
   let filtroTipo = document.getElementById("filtroTipo").value;
   let filtroFecha = document.getElementById("filtroFecha").value;
 
-  // Aplicar filtros
-  let filtrados = reportes.filter(r => {
-    let coincideTipo = filtroTipo === "" || r.tipo === filtroTipo;
-    let coincideFecha = filtroFecha === "" || r.fecha === filtroFecha;
-    return coincideTipo && coincideFecha;
-  });
+  try {
+    // Consultamos al backend en tiempo real
+    const respuesta = await fetch('http://localhost:3000/api/reportes');
+    const data = await respuesta.json();
 
-  let contenedor = document.getElementById("contenedor-reportes");
+    if (!data.success) {
+      alert("No se pudo sincronizar el historial de reportes.");
+      return;
+    }
 
-  if (filtrados.length === 0) {
-    contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2><p>No hay reportes que coincidan con el filtro.</p>";
-    return;
+    let reportes = data.reportes;
+
+    // Filtrado en memoria del lado del cliente para mayor velocidad
+    let filtrados = reportes.filter(r => {
+      let coincideTipo = filtroTipo === "" || r.tipo === filtroTipo;
+      
+      // Limpiamos el formato de fecha ISO que retorna MySQL (YYYY-MM-DDTHH:mm:ss...)
+      let fechaFormateada = r.fecha_incidente.split('T')[0];
+      let coincideFecha = filtroFecha === "" || fechaFormateada === filtroFecha;
+      
+      return coincideTipo && coincideFecha;
+    });
+
+    let contenedor = document.getElementById("contenedor-reportes");
+
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2><p>No hay incidentes viales bajo este criterio de búsqueda.</p>";
+      return;
+    }
+
+    // Construcción dinámica de la tabla HTML
+    let html = "<table><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Usuario</th></tr>";
+    filtrados.forEach((r) => {
+      let fechaLimpia = r.fecha_incidente.split('T')[0];
+      html += `<tr>
+        <td>${r.tipo}</td>
+        <td>${r.descripcion}</td>
+        <td>${fechaLimpia}</td>
+        <td>${r.usuario}</td>
+      </tr>`;
+    });
+    html += "</table>";
+
+    contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2>" + html;
+
+  } catch (error) {
+    console.error("Fallo de comunicación con la API de datos:", error);
   }
-
-  let html = "<table><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Usuario</th><th>Acciones</th></tr>";
-  filtrados.forEach((r, index) => {
-    html += `<tr>
-      <td>${r.tipo}</td>
-      <td>${r.descripcion}</td>
-      <td>${r.fecha}</td>
-      <td>${r.usuario}</td>
-      <td>
-        ${usuarioActivo && usuarioActivo.correo === r.usuario 
-          ? `<button onclick="eliminarReporte(${index})">Eliminar</button>` 
-          : ""}
-      </td>
-    </tr>`;
-  });
-  html += "</table>";
-
-  contenedor.innerHTML = "<h2>Lista de Reportes Registrados</h2>" + html;
 }
-
-function eliminarReporte(index) {
-  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
-  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
-
-  if (usuarioActivo && usuarioActivo.correo === reportes[index].usuario) {
-    reportes.splice(index, 1);
-    localStorage.setItem("reportes", JSON.stringify(reportes));
-    mostrarReportes();
-    alert("Reporte eliminado.");
-  } else {
-    alert("No puedes eliminar este reporte porque no es tuyo.");
-  }
-}
-
-function eliminarTodosMisReportes() {
-  let reportes = JSON.parse(localStorage.getItem("reportes")) || [];
-  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
-
-  if (!usuarioActivo) {
-    alert("Debes iniciar sesión.");
-    return;
-  }
-
-  reportes = reportes.filter(r => r.usuario !== usuarioActivo.correo);
-  localStorage.setItem("reportes", JSON.stringify(reportes));
-  mostrarReportes();
-  alert("Todos tus reportes han sido eliminados.");
-}
-
-function limpiarFiltros() {
-  document.getElementById("filtroTipo").value = "";
-  document.getElementById("filtroFecha").value = "";
-  mostrarReportes();
-}
-
-mostrarReportes();
 </script>
 
 </body>
