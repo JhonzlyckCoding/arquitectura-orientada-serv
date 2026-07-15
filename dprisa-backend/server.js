@@ -26,11 +26,11 @@ webpush.setVapidDetails(
 app.post('/api/registro', async (req, res) => {
     const { nombre, correo, contrasena } = req.body;
     try {
-        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (1$, 2$, 3$) RETURNING id_usuario';
+        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES ($1, $2, $3) RETURNING id_usuario';
         const resultado = await db.query(query, [nombre, correo, contrasena]);
         res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.rows[0].id_usuario });
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
+        if (error.code === '23505') { // Código de error para violación de restricción única en PostgreSQL
             return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
         }
         res.status(500).json({ success: false, message: 'Error en el servidor.' });
@@ -41,10 +41,11 @@ app.post('/api/registro', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { correo, contrasena } = req.body;
     try {
-        const query = 'SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = ? AND contrasena = ?';
-        const [filas] = await db.query(query, [correo, contrasena]);
-        if (filas.length > 0) {
-            res.status(200).json({ success: true, message: 'Inicio de sesión exitoso', usuario: filas[0] });
+        const query = 'SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = $1 AND contrasena = $2';
+        const resultado = await db.query(query, [correo, contrasena]);
+
+        if (resultado.rows.length > 0) {
+            res.status(200).json({ success: true, message: 'Inicio de sesión exitoso', usuario: resultado.rows[0] });
         } else {
             res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
         }
@@ -62,8 +63,8 @@ app.post('/api/suscripciones', async (req, res) => {
     try {
       const query = `
         INSERT INTO suscripciones_push (id_usuario, endpoint, subscription_json) 
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE id_usuario = ?, subscription_json = ?`;
+        VALUES ($1, $2, $3)
+        ON DUPLICATE KEY UPDATE id_usuario = $4, subscription_json = $5`;
       await db.query(query, [id_usuario, subscription.endpoint, JSON.stringify(subscription), id_usuario, JSON.stringify(subscription)]);
       res.status(201).json({ success: true, message: 'Suscripción guardada.' });
     } catch (error) {
@@ -80,7 +81,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
   }
 
   try {
-    const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES (?, ?, ?, ?)`;
+    const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES ($1, $2, $3, $4)`;
     const [resultadoDB] = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
     
     const [dispositivos] = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
@@ -94,7 +95,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
     const notificaciones = dispositivos.map(disp => {
       const subObjeto = JSON.parse(disp.subscription_json);
       return webpush.sendNotification(subObjeto, payload).catch(async () => {
-        await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = ?', [disp.id_suscripcion]);
+        await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
       });
     });
     
@@ -125,7 +126,7 @@ app.get('/api/reportes', async (req, res) => {
 app.delete('/api/reportes/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await db.query('DELETE FROM reportes WHERE id_reporte = ?', [id]);
+    await db.query('DELETE FROM reportes WHERE id_reporte = $1', [id]);
     res.status(200).json({ success: true, message: 'Reporte eliminado.' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'No se pudo eliminar.' });
