@@ -84,10 +84,11 @@ app.post('/api/reportes/nuevo', async (req, res) => {
   }
 
   try {
-    const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES ($1, $2, $3, $4)`;
+    const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES ($1, $2, $3, $4) 
+    RETURNING id_reporte`;
     const resultadoDB = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
     
-    const dispositivos = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
+    const dispositivosQuery = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
     const payload = JSON.stringify({
       title: '¡Alerta en Dprisa!',
       body: `${tipo}: ${descripcion}`,
@@ -95,7 +96,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
       url: '/mapa.html'
     });
 
-    const notificaciones = dispositivos.map(disp => {
+    const notificaciones = dispositivosQuery.rows.map(disp => {
       const subObjeto = JSON.parse(disp.subscription_json);
       return webpush.sendNotification(subObjeto, payload).catch(async () => {
         await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
