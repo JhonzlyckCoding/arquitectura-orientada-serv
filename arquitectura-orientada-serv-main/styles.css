@@ -177,3 +177,28 @@ a button:hover {
     color: var(--color-dark-brown);
     transform: none;
 }
+.car-animation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto; /* Centrado y con menos margen */
+    width: 550px;       /* Mucho más ancho */
+    height: 240px;      /* Mucho más bajito y estilizado */
+    /* ==================================== */
+
+    border-radius: 12px; /* Un poco menos redondeado para ese ancho */
+    overflow: hidden; /* ¡Crucial! Recorta el GIF sobrante */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    border: 2px solid var(--white);
+    background-color: #2e1a5e; /* Color de fondo del GIF para los bordes */
+}
+
+/* La imagen dentro: Ajustada para que no se estire */
+.animated-car {
+    width: 100%; /* Ocupa todo el ancho */
+    height: auto; /* Mantiene la proporción para no deformarse */
+    display: block;
+    
+    /* Esta línea ayuda a centrar verticalmente si la imagen es alta */
+    transform: translateY(-20%); /* Ajusta este % si quieres ver más arriba o abajo */
+}
