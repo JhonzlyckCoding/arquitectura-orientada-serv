@@ -1,6 +1,7 @@
 const express = require('express');
 const webpush = require('web-push');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const db = require('./database'); 
@@ -9,8 +10,8 @@ app.use(cors());
 app.use(express.json()); 
 
 // --- CONFIGURACIÓN DE WEB-PUSH ---
-const publicVapidKey = 'BApc8sZjqEMNmgUAoZ8IRRt4v9cJItJCP2IEpoThoU1yqr9FK9Ian3i-GIW457WgWatp3Y_6SP37Fjwov2OPSog';
-const privateVapidKey = 'VygJU70G5z4pAU1qr4-sYG-IJFTpluFEZuubXH54oZ0';
+const publicVapidKey = process.env.publicVapidKey;
+const privateVapidKey = process.env.privateVapidKey;
 
 webpush.setVapidDetails(
   'mailto:contacto@dprisa.com', 
@@ -25,9 +26,20 @@ webpush.setVapidDetails(
 // 1. REGISTRO DE USUARIO
 app.post('/api/registro', async (req, res) => {
     const { nombre, correo, contrasena } = req.body;
+
     try {
-        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES ($1, $2, $3) RETURNING id_usuario';
-        const resultado = await db.query(query, [nombre, correo, contrasena]);
+        const hash = await bcrypt.hash(contrasena, 10);
+
+        const query = `
+
+          INSERT INTO usuarios (nombre, correo, contrasena)
+          VALUES ($1, $2, $3)
+          RETURNING id_usuario
+
+          `;
+
+        const resultado = await db.query(query, [nombre, correo, hash]);
+
         res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.rows[0].id_usuario });
     } catch (error) {
         if (error.code === '23505') { // Código de error para violación de restricción única en PostgreSQL
@@ -39,19 +51,70 @@ app.post('/api/registro', async (req, res) => {
 
 // 2. LOGIN DE USUARIO
 app.post('/api/login', async (req, res) => {
-    const { correo, contrasena } = req.body;
-    try {
-        const query = 'SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = $1 AND contrasena = $2';
-        const resultado = await db.query(query, [correo, contrasena]);
 
-        if (resultado.rows.length > 0) {
-            res.status(200).json({ success: true, message: 'Inicio de sesión exitoso', usuario: resultado.rows[0] });
-        } else {
-            res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
+    const { correo, contrasena } = req.body;
+
+    try {
+
+        const query = `
+        SELECT id_usuario,
+               nombre,
+               correo,
+               contrasena
+        FROM usuarios
+        WHERE correo = $1
+        `;
+
+        const resultado = await db.query(query, [correo]);
+
+        if (resultado.rows.length === 0) {
+
+            return res.status(401).json({
+                success: false,
+                message: 'Correo o contraseña incorrectos'
+            });
+
         }
+
+        const usuario = resultado.rows[0];
+
+        const coincide = await bcrypt.compare(
+            contrasena,
+            usuario.contrasena
+        );
+
+        if (!coincide) {
+
+            return res.status(401).json({
+                success: false,
+                message: 'Correo o contraseña incorrectos'
+            });
+
+        }
+
+        delete usuario.contrasena;
+
+        res.status(200).json({
+
+            success: true,
+            message: 'Inicio de sesión exitoso',
+            usuario
+
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error en el servidor.' });
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            message: 'Error en el servidor.'
+
+        });
+
     }
+
 });
 
 // 3. GUARDAR SUSCRIPCIÓN PUSH EN MYSQL
@@ -127,14 +190,37 @@ app.get('/api/reportes', async (req, res) => {
 });
 
 // 6. ELIMINAR UN REPORTE
+// 6. ELIMINAR UN REPORTE
 app.delete('/api/reportes/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await db.query('DELETE FROM reportes WHERE id_reporte = $1', [id]);
-    res.status(200).json({ success: true, message: 'Reporte eliminado.' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'No se pudo eliminar.' });
-  }
+    const { id } = req.params;
+
+    try {
+        const resultado = await db.query(
+            'DELETE FROM reportes WHERE id_reporte = $1 RETURNING id_reporte',
+            [id]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reporte no encontrado.'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reporte eliminado correctamente.',
+            id_reporte: resultado.rows[0].id_reporte
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar reporte:', error);
+
+        res.status(500).json({
+            success: false,
+            message: 'No se pudo eliminar el reporte.'
+        });
+    }
 });
 
 // ==========================================
