@@ -26,9 +26,9 @@ webpush.setVapidDetails(
 app.post('/api/registro', async (req, res) => {
     const { nombre, correo, contrasena } = req.body;
     try {
-        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)';
-        const [resultado] = await db.query(query, [nombre, correo, contrasena]);
-        res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.insertId });
+        const query = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (1$, 2$, 3$) RETURNING id_usuario';
+        const resultado = await db.query(query, [nombre, correo, contrasena]);
+        res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.rows[0].id_usuario });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
