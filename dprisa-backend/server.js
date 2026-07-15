@@ -64,10 +64,13 @@ app.post('/api/suscripciones', async (req, res) => {
       const query = `
         INSERT INTO suscripciones_push (id_usuario, endpoint, subscription_json) 
         VALUES ($1, $2, $3)
-        ON DUPLICATE KEY UPDATE id_usuario = $4, subscription_json = $5`;
-      await db.query(query, [id_usuario, subscription.endpoint, JSON.stringify(subscription), id_usuario, JSON.stringify(subscription)]);
+        ON CONFLICT (endpoint)
+        DO UPDATE SET id_usuario = EXCLUDED.id_usuario, subscription_json = EXCLUDED.subscription_json
+        `;
+      await db.query(query, [id_usuario, subscription.endpoint, JSON.stringify(subscription)]);
       res.status(201).json({ success: true, message: 'Suscripción guardada.' });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ success: false, error: 'Error interno.' });
     }
 });
@@ -82,9 +85,9 @@ app.post('/api/reportes/nuevo', async (req, res) => {
 
   try {
     const queryInsert = `INSERT INTO reportes (id_usuario, tipo, descripcion, fecha_incidente) VALUES ($1, $2, $3, $4)`;
-    const [resultadoDB] = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
+    const resultadoDB = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
     
-    const [dispositivos] = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
+    const dispositivos = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
     const payload = JSON.stringify({
       title: '¡Alerta en Dprisa!',
       body: `${tipo}: ${descripcion}`,
@@ -100,7 +103,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
     });
     
     await Promise.all(notificaciones);
-    res.status(201).json({ success: true, message: 'Reporte guardado.', id_reporte: resultadoDB.insertId });
+    res.status(201).json({ success: true, message: 'Reporte guardado.', id_reporte: resultadoDB.rows[0].id_reporte });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Error en el servidor.' });
@@ -115,8 +118,8 @@ app.get('/api/reportes', async (req, res) => {
       FROM reportes r
       JOIN usuarios u ON r.id_usuario = u.id_usuario
       ORDER BY r.fecha_registro DESC`;
-    const [listaReportes] = await db.query(querySelect);
-    res.status(200).json({ success: true, reportes: listaReportes });
+    const listaReportes = await db.query(querySelect);
+    res.status(200).json({ success: true, reportes: listaReportes.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error BD.' });
   }
