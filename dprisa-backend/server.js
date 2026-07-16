@@ -158,6 +158,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
     const resultadoDB = await db.query(queryInsert, [id_usuario, tipo, descripcion, fecha_incidente]);
     
     const dispositivosQuery = await db.query('SELECT id_suscripcion, subscription_json FROM suscripciones_push');
+    console.log(`📣 Intentando enviar notificación a ${dispositivosQuery.rows.length} dispositivos...`);
     const payload = JSON.stringify({
       title: '¡Alerta en Dprisa!',
       body: `${tipo}: ${descripcion}`,
@@ -167,8 +168,14 @@ app.post('/api/reportes/nuevo', async (req, res) => {
 
     const notificaciones = dispositivosQuery.rows.map(disp => {
       const subObjeto = JSON.parse(disp.subscription_json);
-      return webpush.sendNotification(subObjeto, payload).catch(async () => {
-        await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
+      
+      return webpush.sendNotification(subObjeto, payload).catch(async (errorPush) => {
+        // 1. Imprimimos el error exacto en la terminal
+        console.error("❌ FALLÓ EL ENVÍO PUSH AL ID:", disp.id_suscripcion);
+        console.error("Detalle del error:", errorPush.statusCode, errorPush.body);
+        
+        // 2. Comentamos el DELETE temporalmente para no perder el registro mientras depuramos
+        // await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
       });
     });
     
