@@ -204,3 +204,78 @@ a button:hover {
     /* Esta línea ayuda a centrar verticalmente si la imagen es alta */
     transform: translateY(-20%); /* Ajusta este % si quieres ver más arriba o abajo */
 }
+
+select {
+    padding: 12px;
+    border: 2px solid var(--color-tan);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 300px; /* Mismo ancho exacto que tus cuadros de texto */
+    margin: 10px auto;
+    font-size: 1rem;
+    background-color: var(--white);
+    color: var(--color-dark-brown);
+    display: inline-block;
+    cursor: pointer;
+    box-sizing: border-box; /* Evita que el padding deforme el tamaño */
+    outline: none;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Efecto focus cuando haces clic en el selector */
+select:focus {
+    border-color: var(--color-olive);
+    background-color: #fafafa;
+}
+
+input[type="date"] {
+    padding: 12px;
+    border: 2px solid var(--color-tan);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 300px;
+    font-size: 1rem;
+    color: var(--color-dark-brown);
+    background-color: var(--white);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    
+    /* === ESTO CENTRA LA FECHA PERFECTAMENTE === */
+    display: block;
+    margin: 10px auto 20px auto;
+}
+
+/* Efecto focus cuando haces clic en la fecha */
+input[type="date"]:focus {
+    border-color: var(--color-olive);
+    background-color: #fafafa;
+}
+
+/* Estilo para el área de descripción más amplia */
+textarea {
+    padding: 12px;
+    border: 2px solid var(--color-tan);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 300px;
+    min-height: 100px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--color-dark-brown);
+    background-color: var(--white);
+    box-sizing: border-box;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    
+    /* === ESTO CORRIGE EL CENTRADO Y EMPUJA LA FECHA ABAJO === */
+    display: block;
+    margin: 10px auto 20px auto; 
+}
+
+/* Efecto focus al hacer clic */
+textarea:focus {
+    border-color: var(--color-olive);
+    background-color: #fafafa;
+}
