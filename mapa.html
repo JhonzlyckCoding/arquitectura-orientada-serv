@@ -88,7 +88,7 @@
               console.log("PASO 6: Service Worker activo. Generando suscripción en el navegador...");
               
               // ¡PEGA TU LLAVE PÚBLICA AQUÍ!
-              const llavePublicaVapid = 'BApc8sZjqEMNmgUAoZ8IRRt4v9cJItJCP2IEpoThoU1yqr9FK9Ian3i-GIW457WgWatp3Y_6SP37Fjwov2OPSog'; 
+              const llavePublicaVapid = 'BGZ1uu4Hk7k8EtsaEgC_3cM481-R-teUI01Qo2b_5fAPniG8QI_o7x8ddRFmUpevYYb1n3PxGRxfFVTmibO1sS4'; 
               const applicationServerKey = urlBase64ToUint8Array(llavePublicaVapid);
               
               return swListo.pushManager.subscribe({
@@ -98,12 +98,25 @@
             })
             .then(subscription => {
               console.log("PASO 7: ¡Suscripción creada con éxito!", subscription);
+  
+  // 1. Extraemos el usuario guardado en el login
+              let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+              let idUsuario = usuarioActivo ? usuarioActivo.id_usuario : null;
+
+              if (!idUsuario) {
+                console.warn("⚠️ Advertencia: No hay usuario activo. La suscripción se enviará sin id_usuario.");
+              }
+
               console.log("PASO 8: Enviando datos a Node.js (http://localhost:3000)...");
-              
+  
+  // 2. Estructuramos el body exactamente como lo espera tu backend en server.js
               return fetch('http://localhost:3000/api/suscripciones', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription)
+                body: JSON.stringify({ 
+                  subscription: subscription, 
+                  id_usuario: idUsuario 
+                })
               });
             })
             .then(res => {
