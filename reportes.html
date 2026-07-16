@@ -62,7 +62,6 @@
 
 <section style="text-align: center;">
     <a href="registroreporte.html"><button>Reportar incidente</button></a>
-    <button onclick="eliminarTodosMisReportes()">Eliminar todos mis reportes</button>
 </section>
 
 <script>
@@ -103,15 +102,27 @@ async function mostrarReportes() {
       return;
     }
 
-    // Construcción dinámica de la tabla HTML
-    let html = "<table><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th><th>Usuario</th></tr>";
+// Construcción dinámica de la tabla HTML con columna de acción
+    let html = `<table>
+      <tr>
+        <th>Tipo</th>
+        <th>Descripción</th>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Acción</th> </tr>`;
+      
     filtrados.forEach((r) => {
       let fechaLimpia = r.fecha_incidente.split('T')[0];
+      
+      // Asumiendo que tu llave primaria es 'id_reporte' (si es diferente, cámbialo aquí)
       html += `<tr>
         <td>${r.tipo}</td>
         <td>${r.descripcion}</td>
         <td>${fechaLimpia}</td>
         <td>${r.usuario}</td>
+        <td>
+          <button class="btn-eliminar" onclick="eliminarUnReporte(${r.id_reporte})">🗑️ Borrar</button>
+        </td>
       </tr>`;
     });
     html += "</table>";
@@ -120,6 +131,29 @@ async function mostrarReportes() {
 
   } catch (error) {
     console.error("Fallo de comunicación con la API de datos:", error);
+  }
+}
+async function eliminarUnReporte(id) {
+  if (!confirm("¿Estás seguro de que quieres eliminar este reporte?")) {
+    return; 
+  }
+
+  try {
+    // CAMBIO AQUÍ: Quitamos "/eliminar" para que coincida exactamente con tu server.js
+    const respuesta = await fetch(`http://localhost:3000/api/reportes/${id}`, {
+      method: 'DELETE'
+    });
+    const resultado = await respuesta.json();
+
+    if (resultado.success) {
+      alert("Reporte eliminado con éxito.");
+      mostrarReportes(); // Recarga la tabla en tiempo real
+    } else {
+      alert("No se pudo eliminar el reporte: " + resultado.message);
+    }
+  } catch (error) {
+    console.error("Error al intentar eliminar el reporte:", error);
+    alert("Error de conexión con el servidor.");
   }
 }
 </script>

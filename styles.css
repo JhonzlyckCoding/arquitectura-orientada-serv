@@ -279,3 +279,20 @@ textarea:focus {
     border-color: var(--color-olive);
     background-color: #fafafa;
 }
+/* Estilo para el botón Borrar en la tabla */
+        .btn-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin: 0;
+            width: auto; /* Evita que herede el ancho de botones grandes */
+        }
+        .btn-eliminar:hover {
+            background-color: #c0392b;
+            transform: none; /* No se mueve al hacer hover */
+        }
