@@ -189,7 +189,7 @@ a button:hover {
     
     /* === AQUÍ ESTÁ EL CAMBIO DE FORMA === */
     width: 550px;       /* Mucho más ancho */
-    height: 290px;      /* Mucho más bajito y estilizado */
+    height: 500px;      /* Mucho más bajito y estilizado */
     /* ==================================== */
 
     border-radius: 12px; /* Un poco menos redondeado para ese ancho */
