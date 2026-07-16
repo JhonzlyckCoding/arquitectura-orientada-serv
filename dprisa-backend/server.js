@@ -10,8 +10,11 @@ app.use(cors());
 app.use(express.json()); 
 
 // --- CONFIGURACIÓN DE WEB-PUSH ---
-const publicVapidKey = process.env.publicVapidKey;
-const privateVapidKey = process.env.privateVapidKey;
+const publicVapidKey = process.env.publicVapidKey ? process.env.publicVapidKey.trim() : '';
+const privateVapidKey = process.env.privateVapidKey ? process.env.privateVapidKey.trim() : '';
+
+console.log("Llave pública cargada:", publicVapidKey.substring(0, 10) + "...");
+console.log("Llave privada cargada:", privateVapidKey.substring(0, 10) + "...");
 
 webpush.setVapidDetails(
   'mailto:contacto@dprisa.com', 
@@ -42,6 +45,9 @@ app.post('/api/registro', async (req, res) => {
 
         res.status(201).json({ success: true, message: 'Usuario registrado', id: resultado.rows[0].id_usuario });
     } catch (error) {
+
+        console.error('Error en la BD:', error);
+
         if (error.code === '23505') { // Código de error para violación de restricción única en PostgreSQL
             return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
         }
