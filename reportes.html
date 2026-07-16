@@ -37,10 +37,9 @@
   </nav>
 </header>
 
-<!-- Filtros -->
-<section style="text-align: center; margin-bottom: 20px;">
-    <label>Filtrar por tipo:</label>
-    <select id="filtroTipo" onchange="mostrarReportes()">
+<section style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+    <label><b>Filtrar por tipo:</b></label>
+    <select id="filtroTipo" onchange="mostrarReportes()" style="width: auto; max-width: 250px; margin: 0;">
         <option value="">Todos</option>
         <option value="Obras">Obras</option>
         <option value="Accidente">Accidente</option>
@@ -48,10 +47,6 @@
         <option value="Peligro en la vía">Peligro en la vía</option>
         <option value="Clima severo">Clima severo</option>
     </select>
-
-    <label>Filtrar por fecha:</label>
-    <input type="date" id="filtroFecha" onchange="mostrarReportes()">
-
 </section>
 
 <div id="contenedor-reportes" style="padding: 15px; margin-top: 20px; text-align: center;">
@@ -60,17 +55,12 @@
 
 <hr>
 
-<section style="text-align: center;">
-    <a href="registroreporte.html"><button>Reportar incidente</button></a>
-</section>
-
 <script>
 async function mostrarReportes() {
   let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
 
-  // Obtener valores de los filtros
+  // Obtener valor del filtro (Ya no buscamos 'filtroFecha' para evitar que se rompa el código)
   let filtroTipo = document.getElementById("filtroTipo").value;
-  let filtroFecha = document.getElementById("filtroFecha").value;
 
   try {
     // Consultamos al backend en tiempo real
@@ -84,15 +74,10 @@ async function mostrarReportes() {
 
     let reportes = data.reportes;
 
-    // Filtrado en memoria del lado del cliente para mayor velocidad
+    // Filtrado en memoria usando únicamente el tipo de incidente
     let filtrados = reportes.filter(r => {
       let coincideTipo = filtroTipo === "" || r.tipo === filtroTipo;
-      
-      // Limpiamos el formato de fecha ISO que retorna MySQL (YYYY-MM-DDTHH:mm:ss...)
-      let fechaFormateada = r.fecha_incidente.split('T')[0];
-      let coincideFecha = filtroFecha === "" || fechaFormateada === filtroFecha;
-      
-      return coincideTipo && coincideFecha;
+      return coincideTipo;
     });
 
     let contenedor = document.getElementById("contenedor-reportes");
@@ -102,19 +87,19 @@ async function mostrarReportes() {
       return;
     }
 
-// Construcción dinámica de la tabla HTML con columna de acción
+    // Construcción dinámica de la tabla HTML
     let html = `<table>
       <tr>
         <th>Tipo</th>
         <th>Descripción</th>
         <th>Fecha</th>
         <th>Usuario</th>
-        <th>Acción</th> </tr>`;
+        <th>Acción</th> 
+      </tr>`;
       
     filtrados.forEach((r) => {
       let fechaLimpia = r.fecha_incidente.split('T')[0];
       
-      // Asumiendo que tu llave primaria es 'id_reporte' (si es diferente, cámbialo aquí)
       html += `<tr>
         <td>${r.tipo}</td>
         <td>${r.descripcion}</td>
@@ -133,13 +118,13 @@ async function mostrarReportes() {
     console.error("Fallo de comunicación con la API de datos:", error);
   }
 }
+
 async function eliminarUnReporte(id) {
   if (!confirm("¿Estás seguro de que quieres eliminar este reporte?")) {
     return; 
   }
 
   try {
-    // CAMBIO AQUÍ: Quitamos "/eliminar" para que coincida exactamente con tu server.js
     const respuesta = await fetch(`http://localhost:3000/api/reportes/${id}`, {
       method: 'DELETE'
     });
@@ -156,6 +141,9 @@ async function eliminarUnReporte(id) {
     alert("Error de conexión con el servidor.");
   }
 }
+
+// === ESTO HACE QUE CARGUEN AUTOMÁTICAMENTE AL ENTRAR ===
+document.addEventListener("DOMContentLoaded", mostrarReportes);
 </script>
 
 </body>

@@ -59,7 +59,11 @@ nav {
     padding: 10px 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    display: inline-block;
+    display: inline-flex;  /* Usamos inline-flex para un control total del tamaño */
+    justify-content: center;
+    align-items: center;
+    width: auto;           /* Evita que se estire a lo ancho */
+    margin: 10px auto;     /* Centrado físico */
 }
 
 details summary {
