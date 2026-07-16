@@ -300,3 +300,77 @@ textarea:focus {
             background-color: #c0392b;
             transform: none; /* No se mueve al hacer hover */
         }
+        /* ==========================================
+   ESTILOS DE SEGURIDAD PARA LA TABLA DE RUTAS
+   ========================================== */
+
+/* Fuerza al contenedor a comportarse como una tarjeta elegante centrada */
+.contenedor-rutas-tarjeta {
+    background-color: var(--white, #ffffff) !important;
+    border: 1px solid var(--color-tan, #ccc) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    max-width: 90% !important;
+    margin: 30px auto !important;
+    padding: 25px !important;
+    text-align: center !important;
+    display: block !important;
+}
+
+.contenedor-rutas-tarjeta h2 {
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+    color: var(--color-dark-brown, #333) !important;
+}
+
+/* Fuerza el comportamiento de tabla real */
+.tabla-rutas-diseno {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 15px !important;
+}
+
+.tabla-rutas-diseno thead {
+    display: table-header-group !important;
+}
+
+.tabla-rutas-diseno tbody {
+    display: table-row-group !important;
+}
+
+/* Fuerza a las filas a ser filas reales */
+.tabla-rutas-diseno tr {
+    display: table-row !important;
+}
+
+/* Estiliza y fuerza a las celdas a alinearse en columnas */
+.tabla-rutas-diseno th, 
+.tabla-rutas-diseno td {
+    display: table-cell !important;
+    padding: 12px 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Encabezados con fondo gris suave estético */
+.tabla-rutas-diseno th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: bold !important;
+}
+
+/* Filas de datos con fondo blanco */
+.tabla-rutas-diseno td {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+}
+.textarea-autorizable {
+    min-height: 100px;  /* Altura mínima inicial */
+    max-height: 350px;  /* Límite máximo para no romper la pantalla */
+    overflow-y: hidden; /* Oculta la barra de desplazamiento interna fea */
+    resize: none;       /* Desactiva el tirador manual de la esquina para evitar romper el diseño */
+    box-sizing: border-box;
+    transition: height 0.1s ease; /* Transición rápida para que se sienta suave al escribir */
+}

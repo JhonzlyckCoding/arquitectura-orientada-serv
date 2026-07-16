@@ -30,18 +30,29 @@
     <option value="Clima severo">Clima severo</option>
 </select>
 
-<div style="margin-top: 20px;">
+<div class="contenedor-formulario">
     <label>Descripción:</label><br>
-    <textarea id="descripcion" placeholder="Describa lo que pasó" rows="4"></textarea>
+    <textarea id="descripcion" class="textarea-autorizable" placeholder="Describa lo que pasó" rows="4" oninput="autoExpand(this)"></textarea>
 
     <label>Fecha:</label><br>
     <input type="date" id="fecha"><br><br>
 
     <button onclick="registrarReporte()">Registrar reporte</button><br><br>
-
 </div>
 
 <script>
+// Función para expandir automáticamente el textarea conforme se escribe
+function autoExpand(campo) {
+  // Resetea la altura para calcular el scrollHeight real
+  campo.style.height = 'inherit';
+
+  // Obtiene la altura basada en el contenido escrito
+  const alturaCalculada = campo.scrollHeight;
+  
+  // Aplica la nueva altura dinámica
+  campo.style.height = alturaCalculada + 'px';
+}
+
 function registrarReporte() {
   const tipo = document.getElementById("tipoReporte").value;
   const descripcion = document.getElementById("descripcion").value;
