@@ -1,11 +1,11 @@
 
 :root {
-    --color-dark-brown: #312C20;  
+    --color-dark-brown: #000000;  
     --color-dark-grey:  #494D4B;  
-    --color-olive:      #7C7052;  
-    --color-tan:        #B3A176;  
-    --color-cream:      #E2CB92;  
-    --color-bg-light:   #F5F2E9;  
+    --color-olive:      #f32c1e;  
+    --color-tan:        #2fa5ff;  
+    --color-cream:      #f08d3c;  
+    --color-bg-light:   #fef3d3;  
     --white:            #ffffff;
 }
 
@@ -176,4 +176,31 @@ a button:hover {
     background-color: var(--color-cream);
     color: var(--color-dark-brown);
     transform: none;
+}
+.car-animation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto; /* Centrado y con menos margen */
+    
+    /* === AQUÍ ESTÁ EL CAMBIO DE FORMA === */
+    width: 550px;       /* Mucho más ancho */
+    height: 290px;      /* Mucho más bajito y estilizado */
+    /* ==================================== */
+
+    border-radius: 12px; /* Un poco menos redondeado para ese ancho */
+    overflow: hidden; /* ¡Crucial! Recorta el GIF sobrante */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    border: 2px solid var(--white);
+    background-color: #2e1a5e; /* Color de fondo del GIF para los bordes */
+}
+
+/* La imagen dentro: Ajustada para que no se estire */
+.animated-car {
+    width: 100%; /* Ocupa todo el ancho */
+    height: auto; /* Mantiene la proporción para no deformarse */
+    display: block;
+    
+    /* Esta línea ayuda a centrar verticalmente si la imagen es alta */
+    transform: translateY(-20%); /* Ajusta este % si quieres ver más arriba o abajo */
 }

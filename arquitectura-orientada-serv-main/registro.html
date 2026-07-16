@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro - Dprisa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="text-align: center;">
+
+<h1>Registro en Dprisa</h1>
+
+<div style="margin-top: 20px;">
+    <label>Nombre:</label><br>
+    <input type="text" id="nombre" placeholder="Ingresa tu nombre"><br><br>
+
+    <label>Correo:</label><br>
+    <input type="email" id="correo" placeholder="Ingresa tu correo"><br><br>
+    
+    <label>Contraseña:</label><br>
+    <input type="password" id="contraseña" placeholder="Contraseña"><br><br>
+
+    <button onclick="registrarUsuario()">Registrarse</button><br><br>
+
+    <button onclick="location.href='index.html'">Volver a la página principal</button>
+</div>
+
+<script>
+async function registrarUsuario() {
+  const nombre = document.getElementById("nombre").value;
+  const correo = document.getElementById("correo").value;
+  // Nota: asegúrate de que el id del input en tu HTML sea "contrasena" o ajusta esto
+  const contrasena = document.getElementById("contraseña").value; 
+
+  if(!nombre || !correo || !contrasena) {
+      alert("Por favor llena todos los campos.");
+      return;
+  }
+
+  try {
+      const respuesta = await fetch('http://localhost:3000/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, correo, contrasena })
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+          alert("Usuario registrado con éxito en la base de datos!");
+          window.location.href = 'login.html'; // Redirigir al login
+      } else {
+          alert("Error: " + data.message);
+      }
+  } catch (error) {
+      console.error("Error en la petición:", error);
+      alert("No se pudo conectar con el servidor.");
+  }
+}
+</script>

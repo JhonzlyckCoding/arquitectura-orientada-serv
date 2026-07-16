@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro de reporte - Dprisa</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="text-align: center;">
+
+<h1>Registro de reporte</h1>
+  <nav>
+    <details>
+      <summary><b>Menú</b></summary>
+      <div>
+        <a href="index.html"><button>Inicio</button></a>
+        <a href="mapa.html"><button>Mapa</button></a>
+        <a href="rutas.html"><button>Rutas</button></a>
+        <a href="reportes.html"><button>Reportes</button></a>
+        <a href="soporte.html"><button>Soporte</button></a>
+      </div>
+    </details>
+  </nav>
+  <br><br>
+
+<select id="tipoReporte">
+    <option value="">Selecciona el tipo de reporte</option>
+    <option value="Obras">Obras</option>
+    <option value="Accidente">Accidente</option>
+    <option value="Vehículo detenido">Vehículo detenido</option>
+    <option value="Peligro en la vía">Peligro en la vía</option>
+    <option value="Clima severo">Clima severo</option>
+</select>
+
+<div style="margin-top: 20px;">
+    <label>Descripción:</label><br>
+    <input type="text" id="descripcion" placeholder="Describa lo que pasó"><br><br>
+
+    <label>Fecha:</label><br>
+    <input type="date" id="fecha"><br><br>
+
+    <button onclick="registrarReporte()">Registrar reporte</button><br><br>
+
+    <button onclick="location.href='index.html'">Volver a la página principal</button>
+</div>
+
+<script>
+function registrarReporte() {
+  const tipo = document.getElementById("tipoReporte").value;
+  const descripcion = document.getElementById("descripcion").value;
+  const fecha = document.getElementById("fecha").value;
+
+  // Recuperamos el usuario activo que guardó el login
+  let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+  if (!usuarioActivo || !usuarioActivo.id_usuario) {
+    alert("Debes iniciar sesión para registrar un reporte oficial.");
+    return;
+  }
+
+  if (!tipo || !descripcion || !fecha) {
+    alert("Por favor completa todos los campos del incidente.");
+    return;
+  }
+
+  // Enviamos la petición limpia a la API del Servidor
+  fetch('http://localhost:3000/api/reportes/nuevo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tipo: tipo,
+      descripcion: descripcion,
+      fecha_incidente: fecha,
+      id_usuario: usuarioActivo.id_usuario // Mandamos la llave primaria relacional
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("¡Reporte guardado en la Base de Datos con éxito! Alertas enviadas.");
+      window.location.href = 'index.html';
+    } else {
+      alert("Error del servidor: " + data.message);
+    }
+  })
+  .catch(err => {
+    console.error("Error al conectar con la pasarela de servicios:", err);
+    alert("Error de red, el reporte quedó offline.");
+  });
+}
+</script>
+
+</body>
+</html>

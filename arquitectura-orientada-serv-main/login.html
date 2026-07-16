@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dprisa - Acceder a cuenta</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header style="text-align: center; margin-bottom: 20px;">
+    <h1>Acceder</h1>
+</header>
+
+<hr>
+
+<section style="text-align: center;">
+    <h2>Iniciar sesión</h2>
+
+    <p><input type="email" id="loginCorreo" placeholder="Correo"></p>
+    <p><input type="password" id="loginContraseña" placeholder="Contraseña"></p>
+    <button onclick="loginUsuario()">Acceder</button>
+</section>
+
+<script>
+async function loginUsuario() {
+  const correo = document.getElementById("loginCorreo").value;
+  const contrasena = document.getElementById("loginContraseña").value;
+
+  if (!correo || !contrasena) {
+      alert("Por favor ingresa tu correo y contraseña.");
+      return;
+  }
+
+  try {
+      const respuesta = await fetch('http://localhost:3000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo, contrasena })
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+          // Guardamos el usuario activo en localStorage (incluyendo el id_usuario de MySQL)
+          localStorage.setItem("usuarioActivo", JSON.stringify(data.usuario));
+          alert("Bienvenido " + data.usuario.nombre);
+          window.location.href = "index.html"; 
+      } else {
+          alert("Error: " + data.message);
+      }
+  } catch (error) {
+      console.error("Error en la petición:", error);
+      alert("No se pudo conectar con el servidor.");
+  }
+}
+</script>
+
+</body>
+</html>
