@@ -169,14 +169,23 @@ app.post('/api/reportes/nuevo', async (req, res) => {
     const notificaciones = dispositivosQuery.rows.map(disp => {
       const subObjeto = JSON.parse(disp.subscription_json);
       
-      return webpush.sendNotification(subObjeto, payload).catch(async (errorPush) => {
-        // 1. Imprimimos el error exacto en la terminal
-        console.error("❌ FALLÓ EL ENVÍO PUSH AL ID:", disp.id_suscripcion);
-        console.error("Detalle del error:", errorPush.statusCode, errorPush.body);
-        
-        // 2. Comentamos el DELETE temporalmente para no perder el registro mientras depuramos
-        // await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
-      });
+      return webpush.sendNotification(subObjeto, payload)
+        .then(() => {
+            // Si el envío es exitoso, lo imprimimos en verde (simulado)
+            console.log(`✅ ÉXITO: Notificación entregada al dispositivo ID: ${disp.id_suscripcion}`);
+        })
+        .catch(async (errorPush) => {
+            // Si falla, imprimimos el código HTTP exacto y la razón
+            console.error(`❌ FALLO: No se pudo enviar al dispositivo ID: ${disp.id_suscripcion}`);
+            console.error(`⚠️ Código de error HTTP: ${errorPush.statusCode}`);
+            console.error(`📝 Detalle del servidor: ${errorPush.body}`);
+            
+            // Solo borramos si el error es 410 (Gone) o 404 (Not Found)
+            if (errorPush.statusCode === 410 || errorPush.statusCode === 404) {
+                await db.query('DELETE FROM suscripciones_push WHERE id_suscripcion = $1', [disp.id_suscripcion]);
+                console.log(`🗑️ Limpieza: Suscripción ${disp.id_suscripcion} eliminada de la base de datos.`);
+            }
+        });
     });
     
     await Promise.all(notificaciones);
