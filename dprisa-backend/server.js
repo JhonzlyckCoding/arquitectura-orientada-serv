@@ -7,7 +7,8 @@ const app = express();
 const db = require('./database'); 
 
 app.use(cors()); 
-app.use(express.json()); 
+app.use(express.json());
+app.use(express.static(__dirname));
 
 // --- CONFIGURACIÓN DE WEB-PUSH ---
 const publicVapidKey = process.env.publicVapidKey ? process.env.publicVapidKey.trim() : '';
