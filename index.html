@@ -32,6 +32,8 @@
     <button onclick="cerrarSesion()">Cerrar sesión</button>
 </div>
 
+<script src="push-client.js"></script>
+
 <script>
 function cargarIndex() {
   let usuario = JSON.parse(localStorage.getItem("usuarioActivo"));
@@ -39,6 +41,7 @@ function cargarIndex() {
     document.getElementById("usuarioActivo").innerText = "Bienvenido, " + usuario.nombre;
     document.getElementById("menuPublico").style.display = "none";
     document.getElementById("menuPrivado").style.display = "block";
+    inicializarNotificacionesPush();
   } else {
     document.getElementById("usuarioActivo").innerText = "No has iniciado sesión.";
     document.getElementById("menuPublico").style.display = "block";

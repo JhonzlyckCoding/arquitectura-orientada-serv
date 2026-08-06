@@ -31,11 +31,11 @@ async function loginUsuario() {
   }
 
   try {
-      const respuesta = await fetch('http://localhost:3000/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ correo, contrasena })
-      });
+      const respuesta = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, contrasena })
+    });
 
       const data = await respuesta.json();
 

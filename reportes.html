@@ -64,7 +64,7 @@ async function mostrarReportes() {
 
   try {
     // Consultamos al backend en tiempo real
-    const respuesta = await fetch('http://localhost:3000/api/reportes');
+    const respuesta = await fetch('/api/reportes');
     const data = await respuesta.json();
 
     if (!data.success) {
@@ -125,9 +125,9 @@ async function eliminarUnReporte(id) {
   }
 
   try {
-    const respuesta = await fetch(`http://localhost:3000/api/reportes/${id}`, {
+    const respuesta = await fetch(`/api/reportes/${id}`, {
       method: 'DELETE'
-    });
+  });
     const resultado = await respuesta.json();
 
     if (resultado.success) {

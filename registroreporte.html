@@ -71,14 +71,14 @@ function registrarReporte() {
   }
 
   // Enviamos la petición limpia a la API del Servidor
-  fetch('http://localhost:3000/api/reportes/nuevo', {
+  fetch('/api/reportes/nuevo', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       tipo: tipo,
       descripcion: descripcion,
       fecha_incidente: fecha,
-      id_usuario: usuarioActivo.id_usuario // Mandamos la llave primaria relacional
+      id_usuario: usuarioActivo.id_usuario 
     })
   })
   .then(res => res.json())
