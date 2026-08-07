@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const webpush = require('web-push');
 const cors = require('cors');
@@ -8,7 +9,13 @@ const db = require('./database');
 
 app.use(cors()); 
 app.use(express.json());
-app.use(express.static(__dirname));
+
+const rutaFrontend = path.join(__dirname, '..');
+app.use(express.static(rutaFrontend));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(rutaFrontend, 'index.html'));
+});
 
 // --- CONFIGURACIÓN DE WEB-PUSH ---
 const publicVapidKey = process.env.publicVapidKey ? process.env.publicVapidKey.trim() : '';
