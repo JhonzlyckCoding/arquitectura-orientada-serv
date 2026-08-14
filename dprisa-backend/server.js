@@ -171,7 +171,7 @@ app.post('/api/reportes/nuevo', async (req, res) => {
       title: '¡Alerta en Dprisa!',
       body: `${tipo}: ${descripcion}`,
       icon: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png',
-      url: '/mapa.html'
+      url: '/reportes.html'
     });
 
     const notificaciones = dispositivosQuery.rows.map(disp => {
