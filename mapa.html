@@ -16,9 +16,10 @@
     }
   </style>
   <!-- Carga de la API de Google Maps con tu API KEY -->
-  <script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2x2qVRjzwYRROv5aejYcFJQL5jtf3nRM&callback=initMap&loading=async">
-  </script>
+  <!-- Carga de la API de Google Maps con tu API KEY y las librerías extra -->
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2x2qVRjzwYRROv5aejYcFJQL5jtf3nRM&callback=initMap&loading=async&libraries=places,geometry">
+</script>
 </head>
 <body>
 
@@ -53,36 +54,41 @@
   <button onclick="calcularRuta()">Calcular Ruta</button>
 </section>
 <script>
-  // Variables globales para que cualquier botón pueda acceder a ellas
+  // Variables globales
   let mapaGlobal;
   let capaTrafico;
   let servicioRutas;
   let renderizadorRutas;
+  
+  // Variables nuevas para las gasolineras
+  let servicioLugares;
+  let marcadoresGasolineras = [];
 
   function initMap() {
     // 1. Configuramos el mapa base
     const contenedorMapa = document.getElementById("map");
-    const coordenadasIniciales = { lat: 20.4333, lng: -101.7167 }; // Coordenadas de Pénjamo
+    const coordenadasIniciales = { lat: 20.4333, lng: -101.7167 }; // Pénjamo
 
     mapaGlobal = new google.maps.Map(contenedorMapa, {
       center: coordenadasIniciales,
       zoom: 13,
     });
 
-    // 2. Preparamos las herramientas de rutas y las anclamos al mapa
+    // 2. Preparamos las herramientas de rutas
     servicioRutas = new google.maps.DirectionsService();
     renderizadorRutas = new google.maps.DirectionsRenderer();
     renderizadorRutas.setMap(mapaGlobal);
+
+    // 3. Inicializamos el buscador de lugares (Places)
+    servicioLugares = new google.maps.places.PlacesService(mapaGlobal);
   }
 
   // --- LÓGICA DEL BOTÓN TRÁFICO ---
   function mostrarTrafico() {
     if (!capaTrafico) {
-      // Si la capa no existe, la creamos y la mostramos
       capaTrafico = new google.maps.TrafficLayer();
       capaTrafico.setMap(mapaGlobal);
     } else {
-      // Si ya existe, funciona como un interruptor (prender/apagar)
       if (capaTrafico.getMap() == null) {
         capaTrafico.setMap(mapaGlobal);
       } else {
@@ -93,33 +99,92 @@
 
   // --- LÓGICA DEL BOTÓN CALCULAR RUTA ---
   function calcularRuta() {
-    // Capturamos lo que el usuario escribió en los cuadros de texto
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
 
-    // Validación simple
     if (!origen || !destino) {
       alert("Por favor, ingresa tanto el origen como el destino.");
       return;
     }
 
-    // Armamos la petición para los servidores de Google
     const peticionRuta = {
       origin: origen,
       destination: destino,
-      travelMode: google.maps.TravelMode.DRIVING // Viaje en auto
+      travelMode: google.maps.TravelMode.DRIVING 
     };
 
-    // Solicitamos la ruta
     servicioRutas.route(peticionRuta, (resultado, estado) => {
       if (estado === google.maps.DirectionsStatus.OK) {
-        // Si todo salió bien, dibujamos la línea azul
+        // Dibujamos la línea azul
         renderizadorRutas.setDirections(resultado);
+        
+        // ¡NUEVO!: Mandamos a buscar las gasolineras en esta ruta específica
+        buscarGasolinerasEnRuta(resultado.routes[0]);
       } else {
-        // Si hay un error (ej. escribieron una ciudad que no existe)
-        alert("No se pudo calcular la ruta. Verifica que los lugares existan. Error: " + estado);
+        alert("No se pudo calcular la ruta. Error: " + estado);
       }
     });
+  }
+
+  // --- LÓGICA PARA ENCONTRAR GASOLINERAS ---
+  function buscarGasolinerasEnRuta(ruta) {
+    // Limpiamos los iconos del mapa anterior
+    limpiarMarcadores();
+
+    // Le decimos a Google que busque "gasolineras" dentro del recuadro general de la ruta
+    const peticionBusqueda = {
+      query: 'gasolinera',
+      bounds: ruta.bounds
+    };
+
+    servicioLugares.textSearch(peticionBusqueda, (resultados, estado) => {
+      if (estado === google.maps.places.PlacesServiceStatus.OK) {
+        
+        // Creamos una línea imaginaria con la ruta para hacer cálculos matemáticos
+        const lineaRuta = new google.maps.Polyline({
+          path: ruta.overview_path
+        });
+
+        // Revisamos cada gasolinera encontrada
+        resultados.forEach(lugar => {
+          // Usamos geometría para ver si la gasolinera toca la ruta. 
+          // El 0.015 es la tolerancia (aprox 1.5 km de desviación de la avenida principal)
+          const estaEnLaRuta = google.maps.geometry.poly.isLocationOnEdge(
+            lugar.geometry.location, 
+            lineaRuta, 
+            0.015 
+          );
+
+          // Si sí está sobre la ruta, le ponemos un icono
+          if (estaEnLaRuta) {
+            crearMarcadorGasolinera(lugar);
+          }
+        });
+      }
+    });
+  }
+
+  function crearMarcadorGasolinera(lugar) {
+    const marcador = new google.maps.Marker({
+      map: mapaGlobal,
+      position: lugar.geometry.location,
+      title: lugar.name,
+      // Le ponemos un icono personalizado de gasolinera nativo de Google
+      icon: {
+        url: "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/gas_station-71.png",
+        scaledSize: new google.maps.Size(25, 25) 
+      }
+    });
+
+    // Guardamos el marcador en el arreglo para poder borrarlo después
+    marcadoresGasolineras.push(marcador);
+  }
+
+  function limpiarMarcadores() {
+    // Borramos del mapa cada icono guardado
+    marcadoresGasolineras.forEach(marcador => marcador.setMap(null));
+    // Vaciamos la memoria
+    marcadoresGasolineras = [];
   }
 </script>
 </body>
