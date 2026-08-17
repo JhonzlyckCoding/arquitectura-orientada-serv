@@ -43,32 +43,32 @@
 
 <script>
   async function cargarHistorialRutas() {
-    // 1. Obtener el usuario activo
     const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
     const tbody = document.querySelector("#tabla-rutas tbody");
 
-    // Si no hay sesión iniciada, mostramos un mensaje en la tabla
     if (!usuarioActivo || !usuarioActivo.id_usuario) {
       tbody.innerHTML = "<tr><td colspan='5'>Debes iniciar sesión para ver tu historial de rutas.</td></tr>";
       return;
     }
 
     try {
-      // 2. Pedir las rutas al backend usando el ID del usuario
       const respuesta = await fetch(`/api/rutas/${usuarioActivo.id_usuario}`);
+      
+      // Validación extra para saber si el backend nos devolvió un error HTML (ruta no encontrada)
+      if (!respuesta.ok) {
+         throw new Error("El servidor devolvió un error: " + respuesta.status);
+      }
+
       const data = await respuesta.json();
 
       if (data.success && data.rutas.length > 0) {
-        tbody.innerHTML = ""; // Limpiar tabla
+        tbody.innerHTML = ""; 
         
-        // 3. Llenar la tabla dinámica
         data.rutas.forEach(ruta => {
-          // Limpiar la fecha que viene de PostgreSQL para que no muestre la zona horaria
-          const fechaLimpia = ruta.fecha.split('T')[0];
-
           const fila = document.createElement("tr");
+          // Imprimimos ruta.fecha directamente porque es un varchar
           fila.innerHTML = `
-            <td>${fechaLimpia}</td>
+            <td>${ruta.fecha || 'N/A'}</td>
             <td>${ruta.origen}</td>
             <td>${ruta.destino}</td>
             <td>${ruta.distancia}</td>
@@ -81,11 +81,10 @@
       }
     } catch (error) {
       console.error("Error al cargar las rutas:", error);
-      tbody.innerHTML = "<tr><td colspan='5'>Error de conexión con el servidor.</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='5'>Error de conexión con el servidor. Revisa la consola.</td></tr>";
     }
   }
 
-  // Ejecutar automáticamente al cargar la página
   document.addEventListener("DOMContentLoaded", cargarHistorialRutas);
 </script>
 </body>

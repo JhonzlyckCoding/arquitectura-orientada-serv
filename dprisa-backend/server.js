@@ -152,6 +152,27 @@ app.post('/api/suscripciones', async (req, res) => {
     }
 });
 
+app.post('/api/rutas', async(req, res) => {
+    const { id_usuario, fecha, origen, destino, distancia, duracion } = req.body;
+
+    if (!id_usuario || !origen || !destino) {
+        return res.status(400).json({ success: false, message: 'Faltan datos de la ruta' });
+    }
+
+    try {
+        // Agregamos fecha_registro y NOW() a la consulta
+        const query = `
+            INSERT INTO rutas (id_usuario, fecha, origen, destino, distancia, duracion, fecha_registro)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        `;
+        await db.query(query, [id_usuario, fecha, origen, destino, distancia, duracion]);
+        res.status(201).json({ success: true, message: 'Ruta guardada correctamente' });
+    } catch (error) {
+        console.error('Error al guardar la ruta:', error);
+        res.status(500).json({ success: false, message: 'Error en el servidor al guardar ruta' });
+    }
+});
+
 // 4. CREAR REPORTE Y DISPARAR NOTIFICACIONES PUSH
 app.post('/api/reportes/nuevo', async (req, res) => {
   const { tipo, descripcion, fecha_incidente, id_usuario } = req.body;
