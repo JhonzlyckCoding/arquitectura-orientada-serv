@@ -129,7 +129,7 @@
 
         let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
 
-        if (usuario && usuarioActivo.id_usuario){
+        if (usuarioActivo && usuarioActivo.id_usuario){
           fetch('/api/rutas',{
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
