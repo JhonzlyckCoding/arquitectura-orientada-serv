@@ -42,21 +42,51 @@
 </div>
 
 <script>
-  // Al cargar la página, leer historial
-  const historial = JSON.parse(localStorage.getItem("historialRutas")) || [];
-  const tbody = document.querySelector("#tabla-rutas tbody");
+  async function cargarHistorialRutas() {
+    // 1. Obtener el usuario activo
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+    const tbody = document.querySelector("#tabla-rutas tbody");
 
-  historial.forEach(ruta => {
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${ruta.fecha}</td>
-      <td>${ruta.origen}</td>
-      <td>${ruta.destino}</td>
-      <td>${ruta.distancia}</td>
-      <td>${ruta.duracion}</td>
-    `;
-    tbody.appendChild(fila);
-  });
+    // Si no hay sesión iniciada, mostramos un mensaje en la tabla
+    if (!usuarioActivo || !usuarioActivo.id_usuario) {
+      tbody.innerHTML = "<tr><td colspan='5'>Debes iniciar sesión para ver tu historial de rutas.</td></tr>";
+      return;
+    }
+
+    try {
+      // 2. Pedir las rutas al backend usando el ID del usuario
+      const respuesta = await fetch(`/api/rutas/${usuarioActivo.id_usuario}`);
+      const data = await respuesta.json();
+
+      if (data.success && data.rutas.length > 0) {
+        tbody.innerHTML = ""; // Limpiar tabla
+        
+        // 3. Llenar la tabla dinámica
+        data.rutas.forEach(ruta => {
+          // Limpiar la fecha que viene de PostgreSQL para que no muestre la zona horaria
+          const fechaLimpia = ruta.fecha.split('T')[0];
+
+          const fila = document.createElement("tr");
+          fila.innerHTML = `
+            <td>${fechaLimpia}</td>
+            <td>${ruta.origen}</td>
+            <td>${ruta.destino}</td>
+            <td>${ruta.distancia}</td>
+            <td>${ruta.duracion}</td>
+          `;
+          tbody.appendChild(fila);
+        });
+      } else {
+        tbody.innerHTML = "<tr><td colspan='5'>Aún no has trazado ninguna ruta.</td></tr>";
+      }
+    } catch (error) {
+      console.error("Error al cargar las rutas:", error);
+      tbody.innerHTML = "<tr><td colspan='5'>Error de conexión con el servidor.</td></tr>";
+    }
+  }
+
+  // Ejecutar automáticamente al cargar la página
+  document.addEventListener("DOMContentLoaded", cargarHistorialRutas);
 </script>
 </body>
 </html>
