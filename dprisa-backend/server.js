@@ -274,6 +274,26 @@ app.delete('/api/reportes/:id', async (req, res) => {
     }
 });
 
+// 8. LEER HISTORIAL DE RUTAS POR USUARIO
+app.get('/api/rutas/:id_usuario', async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        const query = `
+            SELECT fecha, origen, destino, distancia, duracion 
+            FROM rutas 
+            WHERE id_usuario = $1 
+            ORDER BY fecha DESC
+        `;
+        // db.query ejecuta la instrucción en Supabase
+        const resultado = await db.query(query, [id_usuario]);
+        res.status(200).json({ success: true, rutas: resultado.rows });
+    } catch (error) {
+        console.error('Error al consultar rutas:', error);
+        res.status(500).json({ success: false, message: 'Error al consultar historial' });
+    }
+});
+
 // ==========================================
 //            INICIAR SERVIDOR
 // ==========================================
