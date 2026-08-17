@@ -152,7 +152,8 @@ app.post('/api/suscripciones', async (req, res) => {
     }
 });
 
-app.post('/api/rutas', async(req, res) => {
+// 7. GUARDAR RUTA EN EL HISTORIAL
+app.post('/api/rutas', async (req, res) => {
     const { id_usuario, fecha, origen, destino, distancia, duracion } = req.body;
 
     if (!id_usuario || !origen || !destino) {
@@ -160,7 +161,6 @@ app.post('/api/rutas', async(req, res) => {
     }
 
     try {
-        // Agregamos fecha_registro y NOW() a la consulta
         const query = `
             INSERT INTO rutas (id_usuario, fecha, origen, destino, distancia, duracion, fecha_registro)
             VALUES ($1, $2, $3, $4, $5, $6, NOW())
