@@ -42,21 +42,50 @@
 </div>
 
 <script>
-  // Al cargar la página, leer historial
-  const historial = JSON.parse(localStorage.getItem("historialRutas")) || [];
-  const tbody = document.querySelector("#tabla-rutas tbody");
+  async function cargarHistorialRutas() {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+    const tbody = document.querySelector("#tabla-rutas tbody");
 
-  historial.forEach(ruta => {
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${ruta.fecha}</td>
-      <td>${ruta.origen}</td>
-      <td>${ruta.destino}</td>
-      <td>${ruta.distancia}</td>
-      <td>${ruta.duracion}</td>
-    `;
-    tbody.appendChild(fila);
-  });
+    if (!usuarioActivo || !usuarioActivo.id_usuario) {
+      tbody.innerHTML = "<tr><td colspan='5'>Debes iniciar sesión para ver tu historial de rutas.</td></tr>";
+      return;
+    }
+
+    try {
+      const respuesta = await fetch(`/api/rutas/${usuarioActivo.id_usuario}`);
+      
+      // Validación extra para saber si el backend nos devolvió un error HTML (ruta no encontrada)
+      if (!respuesta.ok) {
+         throw new Error("El servidor devolvió un error: " + respuesta.status);
+      }
+
+      const data = await respuesta.json();
+
+      if (data.success && data.rutas.length > 0) {
+        tbody.innerHTML = ""; 
+        
+        data.rutas.forEach(ruta => {
+          const fila = document.createElement("tr");
+          // Imprimimos ruta.fecha directamente porque es un varchar
+          fila.innerHTML = `
+            <td>${ruta.fecha || 'N/A'}</td>
+            <td>${ruta.origen}</td>
+            <td>${ruta.destino}</td>
+            <td>${ruta.distancia}</td>
+            <td>${ruta.duracion}</td>
+          `;
+          tbody.appendChild(fila);
+        });
+      } else {
+        tbody.innerHTML = "<tr><td colspan='5'>Aún no has trazado ninguna ruta.</td></tr>";
+      }
+    } catch (error) {
+      console.error("Error al cargar las rutas:", error);
+      tbody.innerHTML = "<tr><td colspan='5'>Error de conexión con el servidor. Revisa la consola.</td></tr>";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", cargarHistorialRutas);
 </script>
 </body>
 </html>

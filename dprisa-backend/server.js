@@ -152,6 +152,27 @@ app.post('/api/suscripciones', async (req, res) => {
     }
 });
 
+// 7. GUARDAR RUTA EN EL HISTORIAL
+app.post('/api/rutas', async (req, res) => {
+    const { id_usuario, fecha, origen, destino, distancia, duracion } = req.body;
+
+    if (!id_usuario || !origen || !destino) {
+        return res.status(400).json({ success: false, message: 'Faltan datos de la ruta' });
+    }
+
+    try {
+        const query = `
+            INSERT INTO rutas (id_usuario, fecha, origen, destino, distancia, duracion, fecha_registro)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        `;
+        await db.query(query, [id_usuario, fecha, origen, destino, distancia, duracion]);
+        res.status(201).json({ success: true, message: 'Ruta guardada correctamente' });
+    } catch (error) {
+        console.error('Error al guardar la ruta:', error);
+        res.status(500).json({ success: false, message: 'Error en el servidor al guardar ruta' });
+    }
+});
+
 // 4. CREAR REPORTE Y DISPARAR NOTIFICACIONES PUSH
 app.post('/api/reportes/nuevo', async (req, res) => {
   const { tipo, descripcion, fecha_incidente, id_usuario } = req.body;
@@ -250,6 +271,26 @@ app.delete('/api/reportes/:id', async (req, res) => {
             success: false,
             message: 'No se pudo eliminar el reporte.'
         });
+    }
+});
+
+// 8. LEER HISTORIAL DE RUTAS POR USUARIO
+app.get('/api/rutas/:id_usuario', async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        const query = `
+            SELECT fecha, origen, destino, distancia, duracion 
+            FROM rutas 
+            WHERE id_usuario = $1 
+            ORDER BY fecha DESC
+        `;
+        // db.query ejecuta la instrucción en Supabase
+        const resultado = await db.query(query, [id_usuario]);
+        res.status(200).json({ success: true, rutas: resultado.rows });
+    } catch (error) {
+        console.error('Error al consultar rutas:', error);
+        res.status(500).json({ success: false, message: 'Error al consultar historial' });
     }
 });
 

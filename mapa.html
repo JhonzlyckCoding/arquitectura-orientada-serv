@@ -120,6 +120,32 @@
         
         // ¡NUEVO!: Mandamos a buscar las gasolineras en esta ruta específica
         buscarGasolinerasEnRuta(resultado.routes[0]);
+
+        const datosTramo = resultado.routes[0].legs[0];
+        const distanciaTexto = datosTramo.distance.text;
+        const duracionTexto = datosTramo.duration.text;
+
+        const fechaActual = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+        let usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+        if (usuarioActivo && usuarioActivo.id_usuario){
+          fetch('/api/rutas',{
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              id_usuario: usuarioActivo.id_usuario,
+              fecha: fechaActual,
+              origen: origen,
+              destino: destino,
+              distancia: distanciaTexto,
+              duracion: duracionTexto
+            })
+          })
+          .then(res => res.json())
+          .then(data => console.log("Estado de guardado:", data.message))
+          .catch(err => console.error("Error al guardar la ruta:", err));
+        }
       } else {
         alert("No se pudo calcular la ruta. Error: " + estado);
       }
